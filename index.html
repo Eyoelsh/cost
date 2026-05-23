@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost Calculator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --bg-tertiary: #eeede8;
+    --bg-info: #f1e8e3;
+    --bg-success: #eaf3de;
+    --bg-danger: #fcebeb;
+    --bg-warning: #faeeda;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --text-info: #734831;
+    --text-success: #27500a;
+    --text-danger: #791f1f;
+    --border-subtle: rgba(0,0,0,0.10);
+    --border-medium: rgba(0,0,0,0.18);
+    --border-info: #a56847;
+    --border-success: #97c459;
+    --border-danger: #f09595;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1e1e1c;
+      --bg-secondary: #2a2a28;
+      --bg-tertiary: #242422;
+      --bg-info: #4a3020;
+      --bg-success: #173404;
+      --bg-danger: #501313;
+      --bg-warning: #412402;
+      --text-primary: #f0ede8;
+      --text-secondary: #b4b2a9;
+      --text-tertiary: #888780;
+      --text-info: #a56847;
+      --text-success: #97c459;
+      --text-danger: #f09595;
+      --border-subtle: rgba(255,255,255,0.10);
+      --border-medium: rgba(255,255,255,0.18);
+      --border-info: #8a5a3a;
+      --border-success: #3b6d11;
+      --border-danger: #a32d2d;
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .app-title { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+  .app-sub { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+
+  select.currency-select {
+    font-size: 12px;
+    border-radius: var(--radius-md);
+    padding: 5px 10px;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-medium);
+    cursor: pointer;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.25rem;
+    border-bottom: 0.5px solid var(--border-subtle);
+  }
+
+  .nav-tab {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 18px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -0.5px;
+    font-family: var(--font);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-tab.active { color: #734831; border-bottom-color: var(--border-info); }
+  .nav-tab:hover:not(.active) { color: var(--text-primary); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  /* Material table */
+  .mat-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .mat-table thead th {
+    font-size: 11px; font-weight: 500; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 0 8px 10px 0; text-align: left;
+  }
+  .mat-table thead th:last-child { padding-right: 0; }
+  .mat-table tbody tr { border-top: 0.5px solid var(--border-subtle); }
+  .mat-table tbody td { padding: 7px 8px 7px 0; vertical-align: middle; }
+  .mat-table tbody td:last-child { padding-right: 0; }
+
+  .col-pick  { width: 40px; }
+  .col-name  { min-width: 0; }
+  .col-qty   { width: 68px; }
+  .col-unit  { width: 82px; }
+  .col-price { width: 86px; }
+  .col-total { width: 86px; text-align: right; }
+  .col-del   { width: 34px; text-align: center; }
+
+  .row-total {
+    font-size: 13px; font-weight: 500; color: var(--text-primary);
+    text-align: right; white-space: nowrap;
+  }
+
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    font-size: 13px;
+    padding: 5px 8px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-medium);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: var(--border-info);
+    box-shadow: 0 0 0 2px rgba(165,104,71,0.12);
+  }
+
+  select {
+    font-size: 13px;
+    padding: 5px 8px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    border: 0.5px solid var(--border-medium);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font);
+    cursor: pointer;
+    outline: none;
+  }
+
+  select:focus { border-color: var(--border-info); }
+
+  button {
+    font-family: var(--font);
+    cursor: pointer;
+  }
+
+  .del-btn {
+    background: none; border: none;
+    padding: 5px; color: var(--text-tertiary);
+    border-radius: var(--radius-md);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .del-btn:hover { color: var(--text-danger); background: var(--bg-danger); }
+
+  .pick-btn {
+    background: none; border: none;
+    padding: 5px; color: #734831;
+    border-radius: var(--radius-md);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: background 0.15s;
+  }
+  .pick-btn:hover { background: var(--bg-info); }
+
+  .add-btn {
+    font-size: 13px; display: inline-flex; align-items: center;
+    gap: 6px; color: #734831;
+    background: none; border: 0.5px solid var(--border-info);
+    border-radius: var(--radius-md); padding: 6px 14px;
+    transition: background 0.15s;
+  }
+  .add-btn:hover { background: var(--bg-info); }
+  .add-btn.success { color: var(--text-success); border-color: var(--border-success); }
+  .add-btn.success:hover { background: var(--bg-success); }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  /* Other costs grid */
+  .other-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .field-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .field-group .hint { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+  .field-group input { width: 100%; font-size: 14px; }
+
+  /* Summary */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .metric {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+  .metric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .metric-value { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+
+  .total-card {
+    background: var(--bg-primary);
+    border: 2px solid var(--border-info);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .total-label { font-size: 15px; font-weight: 500; }
+  .total-value { font-size: 30px; font-weight: 500; color: #734831; }
+  .total-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+
+  /* Dropdowns */
+  .dropdown-wrap { position: relative; display: inline-block; }
+
+  .mat-dropdown {
+    position: absolute;
+    z-index: 999;
+    top: 38px; left: 0;
+    width: 250px;
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 6px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  }
+
+  .mat-dropdown-search { padding: 6px 10px; border-bottom: 0.5px solid var(--border-subtle); }
+  .mat-dropdown-search input { width: 100%; height: 30px; }
+  .mat-dropdown-section {
+    font-size: 10px; font-weight: 500; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--text-tertiary);
+    padding: 8px 14px 4px;
+  }
+  .mat-dropdown-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px; cursor: pointer; font-size: 13px; gap: 8px;
+    transition: background 0.1s;
+  }
+  .mat-dropdown-item:hover { background: var(--bg-secondary); }
+  .mat-dropdown-item .item-name { flex: 1; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mat-dropdown-item .item-price { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  .mat-dropdown-empty { padding: 14px; font-size: 13px; color: var(--text-tertiary); text-align: center; }
+
+  /* Catalogue */
+  .cat-filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .cat-pill {
+    font-size: 12px; padding: 4px 14px; border-radius: 20px;
+    cursor: pointer; border: 0.5px solid var(--border-subtle);
+    background: none; color: var(--text-secondary);
+    transition: background 0.15s, color 0.15s;
+  }
+  .cat-pill.active { background: var(--bg-info); color: #734831; border-color: var(--border-info); }
+  .cat-pill:hover:not(.active) { background: var(--bg-secondary); }
+
+  .cat-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .cat-table thead th {
+    font-size: 11px; font-weight: 500; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: .07em;
+    padding: 0 10px 10px 0; text-align: left;
+    border-bottom: 0.5px solid var(--border-subtle);
+  }
+  .cat-table tbody tr { border-bottom: 0.5px solid var(--border-subtle); transition: background 0.1s; }
+  .cat-table tbody tr:hover { background: var(--bg-secondary); }
+  .cat-table tbody td { padding: 9px 10px 9px 0; font-size: 13px; vertical-align: middle; }
+  .cat-table input { width: 100%; font-size: 13px; padding: 4px 8px; height: 30px; }
+  .cat-table select { font-size: 12px; padding: 3px 6px; height: 28px; }
+
+  .cat-badge {
+    display: inline-block; font-size: 11px;
+    padding: 2px 9px; border-radius: var(--radius-md); font-weight: 500;
+  }
+  .cat-wood     { background: #E1F5EE; color: #085041; }
+  .cat-metal    { background: #f1e8e3; color: #734831; }
+  .cat-chemical { background: #FAEEDA; color: #633806; }
+  .cat-fixings  { background: #EEEDFE; color: #5a3d2a; }
+  .cat-other    { background: #F1EFE8; color: #444441; }
+
+  @media (prefers-color-scheme: dark) {
+    .cat-wood     { background: #04342C; color: #9FE1CB; }
+    .cat-metal    { background: #4a3020; color: #d4b5a0; }
+    .cat-chemical { background: #412402; color: #FAC775; }
+    .cat-fixings  { background: #3d2b1f; color: #e6d5c8; }
+    .cat-other    { background: #2C2C2A; color: #D3D1C7; }
+  }
+
+  .edit-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 4px 7px; color: var(--text-tertiary);
+    border-radius: var(--radius-md); font-size: 13px;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .edit-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .edit-btn.danger:hover { background: var(--bg-danger); color: var(--text-danger); }
+  .edit-btn.success { color: var(--text-success); }
+
+  .add-mat-row {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 16px; border-top: 0.5px solid var(--border-subtle);
+    padding-top: 14px; flex-wrap: wrap;
+  }
+  .add-mat-row input { font-size: 13px; }
+  .new-name { flex: 2; min-width: 120px; }
+  .new-price { width: 90px; }
+
+  .cat-count { font-size: 12px; color: var(--text-tertiary); }
+
+  @media (max-width: 540px) {
+    .other-grid { grid-template-columns: 1fr; }
+    .app-header { flex-wrap: wrap; gap: 10px; }
+    .total-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .col-unit, .col-price { width: 70px; }
+    .col-total { width: 72px; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+function updateProjectDetails() {
+  const name = document.getElementById('product-name').value.trim();
+  // No DOM updates needed - value is read directly during PDF export
+}
+
+function exportInvoicePDF() {
+  // Pre-load the logo image to ensure it's ready for html2canvas
+  const logoImg = new Image();
+  logoImg.onload = function() {
+    generateInvoicePDF();
+  };
+  logoImg.onerror = function() {
+    // If image fails to load, generate PDF without logo
+    generateInvoicePDF();
+  };
+  // Use a small timeout as fallback in case onload doesn't fire
+  logoImg.src = "data:image/jpeg;base64,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";
+  setTimeout(function() {
+    if (!logoImg.complete) {
+      generateInvoicePDF();
+    }
+  }, 500);
+}
+
+function generateInvoicePDF() {
+  const currency = document.getElementById('currency').value;
+  const sym = CURRENCIES[currency] || '$';
+  const dec = currency === 'JPY' ? 0 : 2;
+  const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const fmtSimple = (n) => sym + n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const matTotal = rows.reduce((s, r) => s + (r.qty || 0) * (r.price || 0), 0);
+  const laborTotal = v('labor-cost');
+  const transTotal = v('trans-cost');
+  const loadUnloadTotal = v('load-unload-cost');
+  const subtotal = matTotal + laborTotal + transTotal + loadUnloadTotal;
+  const markupPct = v('markup');
+  const markupAmt = subtotal * markupPct / 100;
+  const afterMarkup = subtotal + markupAmt;
+  const vatChecked = document.getElementById('vat-check').checked;
+  const vatAmt = vatChecked ? afterMarkup * 0.15 : 0;
+  const grand = afterMarkup + vatAmt;
+
+  let matRows = rows.map(r => `
+    <tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#1a1a18;">${esc(r.name)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:center;color:#1a1a18;">${r.qty || 0}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:center;color:#1a1a18;">${r.unit || 'pcs'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;color:#1a1a18;">${fmtSimple(r.price || 0)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:600;color:#1a1a18;">${fmtSimple((r.qty || 0) * (r.price || 0))}</td>
+    </tr>
+  `).join('');
+
+  if (!matRows) {
+    matRows = `<tr><td colspan="5" style="padding:14px;text-align:center;color:#888;font-size:13px;">No materials added</td></tr>`;
+  }
+
+  const markupRow = markupPct > 0 
+    ? `<tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Overhead / markup (${markupPct}%)</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(markupAmt)}</td></tr>`
+    : '';
+  const vatRow = vatChecked
+    ? `<tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">VAT (15%)</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(vatAmt)}</td></tr>`
+    : '';
+
+  const invoiceHTML = `
+    <div id="pdf-invoice-content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:720px;margin:0 auto;padding:40px 30px;color:#1a1a18;background:#ffffff;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:35px;border-bottom:2px solid #734831;padding-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <img src="data:image/jpeg;base64,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" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
+          <div>
+            <h1 style="margin:0;font-size:26px;font-weight:700;color:#734831;letter-spacing:-0.3px;">INVOICE</h1>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <p style="margin:0 0 4px;font-size:13px;color:#5f5e5a;">Date: <strong style="color:#1a1a18;">${now}</strong></p>
+          <p style="margin:0;font-size:13px;color:#5f5e5a;">Currency: <strong style="color:#1a1a18;">${currency}</strong></p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+        <div style="padding:14px 18px;background:#f5f5f4;border-radius:8px;border-left:4px solid #a56847;">
+          <p style="margin:0 0 4px;font-size:11px;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Product / Project Name</p>
+          <p style="margin:0;font-size:18px;font-weight:600;color:#734831;">${esc(document.getElementById('product-name').value) || '<span style="color:#888780;font-style:italic;">No project name entered</span>'}</p>
+        </div>
+        <div style="padding:14px 18px;background:#f5f5f4;border-radius:8px;border-left:4px solid #a56847;">
+          <p style="margin:0 0 4px;font-size:11px;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Client Name</p>
+          <p style="margin:0;font-size:18px;font-weight:600;color:#734831;">${esc(document.getElementById('client-name').value) || '<span style="color:#888780;font-style:italic;">No client name entered</span>'}</p>
+        </div>
+      </div>
+
+      <h2 style="font-size:13px;font-weight:600;color:#5f5e5a;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.08em;">Materials</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+        <thead>
+          <tr style="background:#f5f5f4;">
+            <th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;">Material</th>
+            <th style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:60px;">Qty</th>
+            <th style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:60px;">Unit</th>
+            <th style="padding:10px;text-align:right;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:100px;">Unit Price</th>
+            <th style="padding:10px;text-align:right;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:100px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>${matRows}</tbody>
+      </table>
+
+      <h2 style="font-size:13px;font-weight:600;color:#5f5e5a;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.08em;">Cost Breakdown</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+        <tbody>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Materials</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(matTotal)}</td></tr>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Labor cost</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(laborTotal)}</td></tr>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Transport cost</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(transTotal)}</td></tr>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Loading &amp; unloading cost</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(loadUnloadTotal)}</td></tr>
+          ${markupRow}
+          ${vatRow}
+        </tbody>
+      </table>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;background:#f1e8e3;border:1.5px solid #a56847;border-radius:10px;padding:18px 24px;margin-top:10px;">
+        <span style="font-size:15px;font-weight:600;color:#734831;letter-spacing:0.02em;">ORDER TOTAL</span>
+        <span style="font-size:24px;font-weight:700;color:#734831;">${fmtSimple(grand)}</span>
+      </div>
+
+      <p style="margin-top:35px;font-size:11px;color:#888780;text-align:center;">Generated by Cost Calculator &mdash; ${now}</p>
+    </div>
+  `;
+
+  const container = document.createElement('div');
+  container.innerHTML = invoiceHTML;
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '100%';
+  container.style.height = '100%';
+  container.style.overflow = 'auto';
+  container.style.zIndex = '-1000';
+  container.style.opacity = '0';
+  container.style.pointerEvents = 'none';
+  document.body.appendChild(container);
+
+  const element = container.querySelector('#pdf-invoice-content');
+
+  const opt = {
+    margin: 10,
+    filename: `Invoice_${new Date().toISOString().slice(0,10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    document.body.removeChild(container);
+  }).catch((err) => {
+    console.error('PDF export error:', err);
+    document.body.removeChild(container);
+    alert('Failed to generate PDF. Please try again.');
+  });
+}
+</script>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="app-header">
+    <div>
+      <div class="app-title">Cost Calculator</div>
+      <div class="app-sub">Compute materials, labor &amp; transport costs</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="add-btn" onclick="exportInvoicePDF()" style="font-size:13px;padding:6px 14px;">
+        <i class="ti ti-file-download"></i> Export Invoice PDF
+      </button>
+      <select class="currency-select" id="currency" onchange="recalc()">
+      <option value="USD">$ USD</option>
+      <option value="EUR">€ EUR</option>
+      <option value="GBP">£ GBP</option>
+      <option value="ETB">ETB Birr</option>
+      <option value="JPY">¥ JPY</option>
+      <option value="CAD">CA$ CAD</option>
+    </select>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('calc',this)">
+      <i class="ti ti-calculator"></i> Calculator
+    </button>
+    <button class="nav-tab" onclick="showPage('catalogue',this)">
+      <i class="ti ti-package"></i> Materials catalogue
+    </button>
+  </div>
+
+  <!-- CALCULATOR PAGE -->
+  <div id="page-calc" class="page active">
+
+    <div class="card">
+      <div class="section-label"><i class="ti ti-file-description"></i> Project Details</div>
+      <div class="other-grid" style="margin-top:8px;">
+        <div class="field-group">
+          <label style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:block;">Product / Project name</label>
+          <input type="text" id="product-name" placeholder="Enter product or project name…" style="width:100%;font-size:14px;padding:8px 10px;height:40px;" oninput="updateProjectDetails()">
+          <div class="hint">This name will appear on the exported invoice</div>
+        </div>
+        <div class="field-group">
+          <label style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:block;">Client name</label>
+          <input type="text" id="client-name" placeholder="Enter client name…" style="width:100%;font-size:14px;padding:8px 10px;height:40px;" oninput="updateProjectDetails()">
+          <div class="hint">Client name shown on the invoice</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-row">
+        <div class="section-label"><i class="ti ti-packages"></i> Materials</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="mat-table">
+          <thead>
+            <tr>
+              <th class="col-pick"></th>
+              <th class="col-name">Material name</th>
+              <th class="col-qty">Qty</th>
+              <th class="col-unit">Unit</th>
+              <th class="col-price">Unit price</th>
+              <th class="col-total">Total</th>
+              <th class="col-del"></th>
+            </tr>
+          </thead>
+          <tbody id="mat-body"></tbody>
+        </table>
+      </div>
+      <div class="btn-row">
+        <button class="add-btn" onclick="addRow()"><i class="ti ti-plus"></i> Add blank row</button>
+        <div class="dropdown-wrap" id="picker-wrap">
+          <button class="add-btn success" onclick="toggleGlobalPicker(event)">
+            <i class="ti ti-list-search"></i> Pick from catalogue
+          </button>
+          <div class="mat-dropdown" id="global-picker" style="display:none;">
+            <div class="mat-dropdown-search">
+              <input type="text" placeholder="Search materials…" id="global-search" oninput="renderGlobalPicker()">
+            </div>
+            <div id="global-picker-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label"><i class="ti ti-tool"></i> Labor &amp; transport</div>
+      <div class="other-grid">
+        <div class="field-group">
+          <label>Labor cost</label>
+          <input type="number" id="labor-cost" min="0" step="0.01" value="0" oninput="recalc()">
+          <div class="hint">Total labor cost</div>
+        </div>
+        <div class="field-group">
+          <label>Transport cost</label>
+          <input type="number" id="trans-cost" min="0" step="0.01" value="0" oninput="recalc()">
+          <div class="hint">Total transport cost</div>
+        </div>
+        <div class="field-group">
+          <label>Loading &amp; unloading cost</label>
+          <input type="number" id="load-unload-cost" min="0" step="0.01" value="0" oninput="recalc()">
+          <div class="hint">Loading and unloading fees</div>
+        </div>
+        <div class="field-group">
+          <label>Overhead / markup (%)</label>
+          <input type="number" id="markup" min="0" max="200" step="0.5" value="0" oninput="recalc()">
+          <div class="hint">Applied to subtotal</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border-subtle);">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-primary);">
+          <input type="checkbox" id="vat-check" onchange="recalc()" style="width:18px;height:18px;cursor:pointer;accent-color:#734831;">
+          <span>Add VAT (15%)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-bottom:12px;"><i class="ti ti-chart-bar"></i> Cost summary</div>
+    <div class="summary-grid">
+      <div class="metric"><div class="metric-label">Materials</div><div class="metric-value" id="s-mat">—</div></div>
+      <div class="metric"><div class="metric-label">Labor</div><div class="metric-value" id="s-lab">—</div></div>
+      <div class="metric"><div class="metric-label">Transport</div><div class="metric-value" id="s-trans">—</div></div>
+      <div class="metric"><div class="metric-label">Loading &amp; Unloading</div><div class="metric-value" id="s-load">—</div></div>
+      <div class="metric"><div class="metric-label">Markup</div><div class="metric-value" id="s-markup">—</div></div>
+      <div class="metric"><div class="metric-label">VAT (15%)</div><div class="metric-value" id="s-vat">—</div></div>
+    </div>
+
+    <div class="total-card">
+      <div>
+        <div class="total-label">Order total</div>
+        <div class="total-sub" id="total-breakdown">—</div>
+      </div>
+      <div class="total-value" id="grand-total">—</div>
+    </div>
+
+  </div>
+
+  <!-- CATALOGUE PAGE -->
+  <div id="page-catalogue" class="page">
+    <div class="card">
+      <div class="section-row" style="margin-bottom:14px;">
+        <div class="section-label" style="margin-bottom:0;"><i class="ti ti-database"></i> Materials price list</div>
+        <span class="cat-count" id="cat-count"></span>
+      </div>
+      <div class="cat-filter-row" id="cat-filters"></div>
+      <div style="overflow-x:auto;">
+        <table class="cat-table">
+          <thead>
+            <tr>
+              <th style="width:34%;">Material name</th>
+              <th style="width:13%;">Category</th>
+              <th style="width:10%;">Unit</th>
+              <th style="width:13%;text-align:right;">Unit price</th>
+              <th style="width:15%;">Last updated</th>
+              <th style="width:15%;text-align:center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cat-body"></tbody>
+        </table>
+      </div>
+      <div class="add-mat-row">
+        <input type="text" id="new-name" class="new-name" placeholder="Material name">
+        <select id="new-cat">
+          <option value="wood">Wood</option>
+          <option value="metal">Metal</option>
+          <option value="chemical">Chemical</option>
+          <option value="fixings">Fixings</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="new-unit">
+          <option>pcs</option><option>kg</option><option>g</option><option>m</option>
+          <option>m²</option><option>m³</option><option>L</option><option>mL</option>
+          <option>box</option><option>roll</option><option>sheet</option><option>bag</option><option>set</option>
+        </select>
+        <input type="number" id="new-price" class="new-price" placeholder="Price" min="0" step="0.01">
+        <button class="add-btn" onclick="addCatalogueItem()"><i class="ti ti-plus"></i> Add material</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const UNITS = ['pcs','kg','g','m','m²','m³','L','mL','box','roll','sheet','bag','set','hr'];
+const CURRENCIES = { USD:'$', EUR:'€', GBP:'£', ETB:'Br', JPY:'¥', CAD:'CA$' };
+const CATS = { wood:'Wood', metal:'Metal', chemical:'Chemical', fixings:'Fixings', other:'Other' };
+const CATBADGE = { wood:'cat-wood', metal:'cat-metal', chemical:'cat-chemical', fixings:'cat-fixings', other:'cat-other' };
+
+let catalogue = [
+  {id:1,  name:'Oak timber',            cat:'wood',     unit:'m',     price:18.50, updated:'May 2026'},
+  {id:2,  name:'Pine plank',            cat:'wood',     unit:'m',     price:7.20,  updated:'May 2026'},
+  {id:3,  name:'Plywood sheet (18mm)',  cat:'wood',     unit:'sheet', price:24.00, updated:'May 2026'},
+  {id:4,  name:'MDF board (12mm)',      cat:'wood',     unit:'sheet', price:14.50, updated:'May 2026'},
+  {id:5,  name:'Teak veneer',           cat:'wood',     unit:'m²',    price:32.00, updated:'Apr 2026'},
+  {id:6,  name:'Steel rod (10mm)',      cat:'metal',    unit:'m',     price:4.80,  updated:'May 2026'},
+  {id:7,  name:'Galvanised pipe',       cat:'metal',    unit:'m',     price:9.20,  updated:'May 2026'},
+  {id:8,  name:'Aluminium sheet',       cat:'metal',    unit:'m²',    price:28.00, updated:'Apr 2026'},
+  {id:9,  name:'Steel angle bar',       cat:'metal',    unit:'m',     price:6.60,  updated:'May 2026'},
+  {id:10, name:'Wood primer',           cat:'chemical', unit:'L',     price:12.00, updated:'May 2026'},
+  {id:11, name:'Polyurethane varnish',  cat:'chemical', unit:'L',     price:18.50, updated:'Apr 2026'},
+  {id:12, name:'Wood glue',             cat:'chemical', unit:'kg',    price:8.00,  updated:'May 2026'},
+  {id:13, name:'Epoxy resin',           cat:'chemical', unit:'kg',    price:22.00, updated:'Mar 2026'},
+  {id:14, name:'Wood screws (M5×40)',   cat:'fixings',  unit:'box',   price:5.50,  updated:'May 2026'},
+  {id:15, name:'Steel bolts (M8)',      cat:'fixings',  unit:'pcs',   price:0.30,  updated:'May 2026'},
+  {id:16, name:'Corner brackets',       cat:'fixings',  unit:'pcs',   price:1.20,  updated:'May 2026'},
+  {id:17, name:'Sandpaper (pack)',      cat:'other',    unit:'bag',   price:6.00,  updated:'May 2026'},
+  {id:18, name:'Masking tape',          cat:'other',    unit:'roll',  price:2.40,  updated:'May 2026'},
+];
+let catNextId = 19;
+let catFilter = 'all';
+let editingCatId = null;
+let rows = [];
+let nextId = 0;
+
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  if (page === 'catalogue') renderCatalogue();
+}
+
+function fmt(n) {
+  const cur = document.getElementById('currency').value;
+  const sym = CURRENCIES[cur] || '$';
+  const dec = cur === 'JPY' ? 0 : 2;
+  const names = { USD:'USD', EUR:'EUR', GBP:'GBP', ETB:'ETB', JPY:'JPY', CAD:'CAD' };
+  return sym + n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ' + names[cur];
+}
+
+function addRow(name='', qty=1, unit='pcs', price=0) {
+  const id = nextId++;
+  rows.push({ id, name, qty, unit, price });
+  renderRows();
+  recalc();
+}
+
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  renderRows();
+  recalc();
+}
+
+function updateRow(id, field, val) {
+  const row = rows.find(r => r.id === id);
+  if (!row) return;
+  if (field === 'qty' || field === 'price') row[field] = parseFloat(val) || 0;
+  else row[field] = val;
+  const total = (row.qty || 0) * (row.price || 0);
+  const el = document.getElementById('rt-' + id);
+  if (el) el.textContent = total > 0 ? fmt(total) : '—';
+  recalc();
+}
+
+function unitOpts(sel) {
+  return UNITS.map(u => `<option value="${u}"${u === sel ? ' selected' : ''}>${u}</option>`).join('');
+}
+
+function renderRows() {
+  const tbody = document.getElementById('mat-body');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="col-pick">
+        <div class="dropdown-wrap" id="rp-wrap-${r.id}">
+          <button class="pick-btn" onclick="toggleRowPicker(event,${r.id})" title="Pick from catalogue" aria-label="Pick from catalogue">
+            <i class="ti ti-list-search"></i>
+          </button>
+          <div class="mat-dropdown" id="rp-${r.id}" style="display:none;">
+            <div class="mat-dropdown-search">
+              <input type="text" placeholder="Search…" oninput="renderRowPicker(${r.id},this.value)">
+            </div>
+            <div id="rp-list-${r.id}"></div>
+          </div>
+        </div>
+      </td>
+      <td class="col-name">
+        <input type="text" placeholder="Material name" value="${escHtml(r.name)}" oninput="updateRow(${r.id},'name',this.value)">
+      </td>
+      <td class="col-qty">
+        <input type="number" min="0" step="any" value="${r.qty}" oninput="updateRow(${r.id},'qty',this.value)">
+      </td>
+      <td class="col-unit">
+        <select onchange="updateRow(${r.id},'unit',this.value)">${unitOpts(r.unit)}</select>
+      </td>
+      <td class="col-price">
+        <input type="number" min="0" step="any" placeholder="0.00" value="${r.price || ''}" oninput="updateRow(${r.id},'price',this.value)">
+      </td>
+      <td class="col-total">
+        <span class="row-total" id="rt-${r.id}">${r.qty && r.price ? fmt(r.qty * r.price) : '—'}</span>
+      </td>
+      <td class="col-del">
+        <button class="del-btn" onclick="removeRow(${r.id})" aria-label="Remove row">
+          <i class="ti ti-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleRowPicker(e, rowId) {
+  e.stopPropagation();
+  closeAllDropdowns();
+  const dd = document.getElementById('rp-' + rowId);
+  dd.style.display = 'block';
+  renderRowPicker(rowId, '');
+  dd.querySelector('input').focus();
+}
+
+function renderRowPicker(rowId, q) {
+  const list = document.getElementById('rp-list-' + rowId);
+  const filtered = catalogue.filter(m => !q || m.name.toLowerCase().includes(q.toLowerCase()));
+  list.innerHTML = buildPickerHtml(filtered, rowId, 'pickIntoRow');
+}
+
+function buildPickerHtml(filtered, targetId, fn) {
+  if (!filtered.length) return '<div class="mat-dropdown-empty">No results</div>';
+  const grouped = {};
+  filtered.forEach(m => { (grouped[m.cat] = grouped[m.cat] || []).push(m); });
+  return Object.keys(grouped).map(cat => `
+    <div class="mat-dropdown-section">${CATS[cat] || cat}</div>
+    ${grouped[cat].map(m => `
+      <div class="mat-dropdown-item" onclick="${fn}(${targetId},${m.id})">
+        <span class="item-name">${escHtml(m.name)}</span>
+        <span class="item-price">${fmt(m.price)}/${m.unit}</span>
+      </div>`).join('')}
+  `).join('');
+}
+
+function pickIntoRow(rowId, catId) {
+  const m = catalogue.find(c => c.id === catId);
+  if (!m) return;
+  const row = rows.find(r => r.id === rowId);
+  if (!row) return;
+  row.name = m.name; row.unit = m.unit; row.price = m.price;
+  closeAllDropdowns();
+  renderRows();
+  recalc();
+}
+
+function toggleGlobalPicker(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('global-picker');
+  const open = dd.style.display === 'block';
+  closeAllDropdowns();
+  if (!open) {
+    dd.style.display = 'block';
+    renderGlobalPicker();
+    document.getElementById('global-search').focus();
+  }
+}
+
+function renderGlobalPicker() {
+  const q = document.getElementById('global-search').value;
+  const filtered = catalogue.filter(m => !q || m.name.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('global-picker-list').innerHTML = buildPickerHtml(filtered, 0, 'pickIntoNew');
+}
+
+function pickIntoNew(_, catId) {
+  const m = catalogue.find(c => c.id === catId);
+  if (!m) return;
+  closeAllDropdowns();
+  addRow(m.name, 1, m.unit, m.price);
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.mat-dropdown').forEach(d => d.style.display = 'none');
+}
+
+document.addEventListener('click', () => closeAllDropdowns());
+
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function recalc() {
+  const matTotal = rows.reduce((s, r) => s + (r.qty || 0) * (r.price || 0), 0);
+  const laborTotal = v('labor-cost');
+  const transTotal = v('trans-cost');
+  const loadUnloadTotal = v('load-unload-cost');
+  const subtotal = matTotal + laborTotal + transTotal + loadUnloadTotal;
+  const markupPct = v('markup');
+  const markupAmt = subtotal * markupPct / 100;
+  const afterMarkup = subtotal + markupAmt;
+
+  const vatChecked = document.getElementById('vat-check').checked;
+  const vatAmt = vatChecked ? afterMarkup * 0.15 : 0;
+  const grand = afterMarkup + vatAmt;
+
+  // Update summary metrics
+  document.getElementById('s-mat').textContent = fmt(matTotal);
+  document.getElementById('s-lab').textContent = fmt(laborTotal);
+  document.getElementById('s-trans').textContent = fmt(transTotal);
+  document.getElementById('s-load').textContent = fmt(loadUnloadTotal);
+  document.getElementById('s-markup').textContent = markupPct > 0 ? fmt(markupAmt) + ` (${markupPct}%)` : '—';
+  document.getElementById('s-vat').textContent = vatChecked ? fmt(vatAmt) + ' (15%)' : '—';
+  document.getElementById('grand-total').textContent = fmt(grand);
+
+  let breakdown = `Materials ${fmt(matTotal)} + Labor ${fmt(laborTotal)} + Transport ${fmt(transTotal)} + Loading/Unloading ${fmt(loadUnloadTotal)}`;
+  if (markupPct > 0) breakdown += ` + Markup ${fmt(markupAmt)}`;
+  if (vatChecked) breakdown += ` + VAT ${fmt(vatAmt)}`;
+  document.getElementById('total-breakdown').textContent = breakdown;
+
+  // Refresh all row totals in the materials table
+  rows.forEach(r => {
+    const total = (r.qty || 0) * (r.price || 0);
+    const el = document.getElementById('rt-' + r.id);
+    if (el) el.textContent = total > 0 ? fmt(total) : '—';
+  });
+
+  // If catalogue page is active, refresh catalogue prices too
+  const catPage = document.getElementById('page-catalogue');
+  if (catPage && catPage.classList.contains('active')) {
+    renderCatalogue();
+  }
+}
+
+function renderCatalogue() {
+  const filtered = catFilter === 'all' ? catalogue : catalogue.filter(m => m.cat === catFilter);
+  document.getElementById('cat-count').textContent = `${filtered.length} item${filtered.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('cat-body');
+  tbody.innerHTML = filtered.map(m => {
+    if (editingCatId === m.id) {
+      return `<tr>
+        <td><input type="text" id="ec-name" value="${escHtml(m.name)}"></td>
+        <td><select id="ec-cat">${Object.keys(CATS).map(k=>`<option value="${k}"${k===m.cat?' selected':''}>${CATS[k]}</option>`).join('')}</select></td>
+        <td><select id="ec-unit">${UNITS.map(u=>`<option${u===m.unit?' selected':''}>${u}</option>`).join('')}</select></td>
+        <td style="text-align:right;"><input type="number" id="ec-price" value="${m.price}" min="0" step="0.01" style="width:80px;text-align:right;"></td>
+        <td style="font-size:12px;color:var(--text-tertiary);">${m.updated}</td>
+        <td style="text-align:center;">
+          <button class="edit-btn success" onclick="saveEdit(${m.id})"><i class="ti ti-check"></i></button>
+          <button class="edit-btn" onclick="cancelEdit()"><i class="ti ti-x"></i></button>
+        </td>
+      </tr>`;
+    }
+    return `<tr>
+      <td style="font-size:13px;font-weight:500;">${escHtml(m.name)}</td>
+      <td><span class="cat-badge ${CATBADGE[m.cat] || 'cat-other'}">${CATS[m.cat] || m.cat}</span></td>
+      <td style="font-size:13px;color:var(--text-secondary);">${m.unit}</td>
+      <td style="text-align:right;font-size:13px;font-weight:500;">${fmt(m.price)}</td>
+      <td style="font-size:12px;color:var(--text-tertiary);">${m.updated}</td>
+      <td style="text-align:center;">
+        <button class="edit-btn" onclick="startEdit(${m.id})"><i class="ti ti-edit"></i></button>
+        <button class="edit-btn danger" onclick="deleteCat(${m.id})"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" style="padding:20px 0;text-align:center;font-size:13px;color:var(--text-tertiary);">No materials in this category</td></tr>`;
+
+  renderCatFilters();
+}
+
+function renderCatFilters() {
+  const filters = document.getElementById('cat-filters');
+  const all = ['all', ...Object.keys(CATS)];
+  filters.innerHTML = all.map(c => `
+    <button class="cat-pill${catFilter === c ? ' active' : ''}" onclick="setCatFilter('${c}')">
+      ${c === 'all' ? 'All categories' : CATS[c]}
+    </button>`).join('');
+}
+
+function setCatFilter(f) { catFilter = f; renderCatalogue(); }
+function startEdit(id) { editingCatId = id; renderCatalogue(); }
+function cancelEdit() { editingCatId = null; renderCatalogue(); }
+
+function saveEdit(id) {
+  const m = catalogue.find(c => c.id === id);
+  if (!m) return;
+  m.name = document.getElementById('ec-name').value || m.name;
+  m.cat = document.getElementById('ec-cat').value;
+  m.unit = document.getElementById('ec-unit').value;
+  m.price = parseFloat(document.getElementById('ec-price').value) || m.price;
+  m.updated = new Date().toLocaleString('en-US', { month:'short', year:'numeric' });
+  editingCatId = null;
+  renderCatalogue();
+}
+
+function deleteCat(id) {
+  catalogue = catalogue.filter(c => c.id !== id);
+  renderCatalogue();
+}
+
+function addCatalogueItem() {
+  const name = document.getElementById('new-name').value.trim();
+  const price = parseFloat(document.getElementById('new-price').value) || 0;
+  if (!name) { document.getElementById('new-name').focus(); return; }
+  catalogue.push({
+    id: catNextId++,
+    name,
+    cat: document.getElementById('new-cat').value,
+    unit: document.getElementById('new-unit').value,
+    price,
+    updated: new Date().toLocaleString('en-US', { month:'short', year:'numeric' })
+  });
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-price').value = '';
+  renderCatalogue();
+}
+
+addRow('Oak timber', 12, 'm', 18.50);
+addRow('Steel bolts (M8)', 50, 'pcs', 0.30);
+addRow('Wood primer', 2, 'L', 12.00);
+recalc();
+
+function updateProjectDetails() {
+  const name = document.getElementById('product-name').value.trim();
+  // No DOM updates needed - value is read directly during PDF export
+}
+
+function exportInvoicePDF() {
+  // Pre-load the logo image to ensure it's ready for html2canvas
+  const logoImg = new Image();
+  logoImg.onload = function() {
+    generateInvoicePDF();
+  };
+  logoImg.onerror = function() {
+    // If image fails to load, generate PDF without logo
+    generateInvoicePDF();
+  };
+  // Use a small timeout as fallback in case onload doesn't fire
+  logoImg.src = "data:image/jpeg;base64,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";
+  setTimeout(function() {
+    if (!logoImg.complete) {
+      generateInvoicePDF();
+    }
+  }, 500);
+}
+
+function generateInvoicePDF() {
+  const currency = document.getElementById('currency').value;
+  const sym = CURRENCIES[currency] || '$';
+  const dec = currency === 'JPY' ? 0 : 2;
+  const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const fmtSimple = (n) => sym + n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  const matTotal = rows.reduce((s, r) => s + (r.qty || 0) * (r.price || 0), 0);
+  const laborTotal = v('labor-cost');
+  const transTotal = v('trans-cost');
+  const loadUnloadTotal = v('load-unload-cost');
+  const subtotal = matTotal + laborTotal + transTotal + loadUnloadTotal;
+  const markupPct = v('markup');
+  const markupAmt = subtotal * markupPct / 100;
+  const afterMarkup = subtotal + markupAmt;
+  const vatChecked = document.getElementById('vat-check').checked;
+  const vatAmt = vatChecked ? afterMarkup * 0.15 : 0;
+  const grand = afterMarkup + vatAmt;
+
+  let matRows = rows.map(r => `
+    <tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#1a1a18;">${esc(r.name)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:center;color:#1a1a18;">${r.qty || 0}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:center;color:#1a1a18;">${r.unit || 'pcs'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;color:#1a1a18;">${fmtSimple(r.price || 0)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:600;color:#1a1a18;">${fmtSimple((r.qty || 0) * (r.price || 0))}</td>
+    </tr>
+  `).join('');
+
+  if (!matRows) {
+    matRows = `<tr><td colspan="5" style="padding:14px;text-align:center;color:#888;font-size:13px;">No materials added</td></tr>`;
+  }
+
+  const markupRow = markupPct > 0 
+    ? `<tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Overhead / markup (${markupPct}%)</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(markupAmt)}</td></tr>`
+    : '';
+  const vatRow = vatChecked
+    ? `<tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">VAT (15%)</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(vatAmt)}</td></tr>`
+    : '';
+
+  const invoiceHTML = `
+    <div id="pdf-invoice-content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:720px;margin:0 auto;padding:40px 30px;color:#1a1a18;background:#ffffff;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:35px;border-bottom:2px solid #734831;padding-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <img src="data:image/jpeg;base64,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" style="height:40px;width:auto;object-fit:contain;" alt="Logo">
+          <div>
+            <h1 style="margin:0;font-size:26px;font-weight:700;color:#734831;letter-spacing:-0.3px;">INVOICE</h1>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <p style="margin:0 0 4px;font-size:13px;color:#5f5e5a;">Date: <strong style="color:#1a1a18;">${now}</strong></p>
+          <p style="margin:0;font-size:13px;color:#5f5e5a;">Currency: <strong style="color:#1a1a18;">${currency}</strong></p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+        <div style="padding:14px 18px;background:#f5f5f4;border-radius:8px;border-left:4px solid #a56847;">
+          <p style="margin:0 0 4px;font-size:11px;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Product / Project Name</p>
+          <p style="margin:0;font-size:18px;font-weight:600;color:#734831;">${esc(document.getElementById('product-name').value) || '<span style="color:#888780;font-style:italic;">No project name entered</span>'}</p>
+        </div>
+        <div style="padding:14px 18px;background:#f5f5f4;border-radius:8px;border-left:4px solid #a56847;">
+          <p style="margin:0 0 4px;font-size:11px;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.08em;font-weight:500;">Client Name</p>
+          <p style="margin:0;font-size:18px;font-weight:600;color:#734831;">${esc(document.getElementById('client-name').value) || '<span style="color:#888780;font-style:italic;">No client name entered</span>'}</p>
+        </div>
+      </div>
+
+      <h2 style="font-size:13px;font-weight:600;color:#5f5e5a;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.08em;">Materials</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+        <thead>
+          <tr style="background:#f5f5f4;">
+            <th style="padding:10px;text-align:left;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;">Material</th>
+            <th style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:60px;">Qty</th>
+            <th style="padding:10px;text-align:center;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:60px;">Unit</th>
+            <th style="padding:10px;text-align:right;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:100px;">Unit Price</th>
+            <th style="padding:10px;text-align:right;font-size:11px;font-weight:600;color:#5f5e5a;text-transform:uppercase;letter-spacing:0.06em;border-bottom:2px solid #ddd;width:100px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>${matRows}</tbody>
+      </table>
+
+      <h2 style="font-size:13px;font-weight:600;color:#5f5e5a;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.08em;">Cost Breakdown</h2>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+        <tbody>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Materials</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(matTotal)}</td></tr>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Labor cost</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(laborTotal)}</td></tr>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Transport cost</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(transTotal)}</td></tr>
+          <tr><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;color:#5f5e5a;">Loading &amp; unloading cost</td><td style="padding:8px 10px;border-bottom:1px solid #ddd;font-size:13px;text-align:right;font-weight:500;color:#1a1a18;">${fmtSimple(loadUnloadTotal)}</td></tr>
+          ${markupRow}
+          ${vatRow}
+        </tbody>
+      </table>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;background:#f1e8e3;border:1.5px solid #a56847;border-radius:10px;padding:18px 24px;margin-top:10px;">
+        <span style="font-size:15px;font-weight:600;color:#734831;letter-spacing:0.02em;">ORDER TOTAL</span>
+        <span style="font-size:24px;font-weight:700;color:#734831;">${fmtSimple(grand)}</span>
+      </div>
+
+      <p style="margin-top:35px;font-size:11px;color:#888780;text-align:center;">Generated by Cost Calculator &mdash; ${now}</p>
+    </div>
+  `;
+
+  const container = document.createElement('div');
+  container.innerHTML = invoiceHTML;
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '100%';
+  container.style.height = '100%';
+  container.style.overflow = 'auto';
+  container.style.zIndex = '-1000';
+  container.style.opacity = '0';
+  container.style.pointerEvents = 'none';
+  document.body.appendChild(container);
+
+  const element = container.querySelector('#pdf-invoice-content');
+
+  const opt = {
+    margin: 10,
+    filename: `Invoice_${new Date().toISOString().slice(0,10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    document.body.removeChild(container);
+  }).catch((err) => {
+    console.error('PDF export error:', err);
+    document.body.removeChild(container);
+    alert('Failed to generate PDF. Please try again.');
+  });
+}
+</script>
+
+</body>
+</html>
